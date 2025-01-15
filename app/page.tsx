@@ -1,17 +1,20 @@
+import { Suspense } from "react";
+import ListView from "./components/ListView";
 import MapView from "./components/MapView";
-
-
+import { getClubs } from "./lib/clubs";
+import LoadingPage from "./components/LoadingPage";
+import ClientWrapper from "./components/ClientWrapper";
 
 export default async function Home() {
-
-
-
   return (
-    <div className="flex flex-col items-center h-dvh gap-12 m-4">
-      <div>
-      <h1 className="text-4xl font-bold">Sats Club Locations</h1>
-      </div>
-          <MapView/>
-    </div>
+    <Suspense fallback={<LoadingPage />}>
+      <MainContent />
+    </Suspense>
   );
+
+  async function MainContent() {
+    const clubs = await getClubs();
+
+    return <ClientWrapper clubs={clubs} />;
+  }
 }
