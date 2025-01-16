@@ -1,5 +1,5 @@
 "use client";
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { Club } from "../types/clubs";
 import MapView from "./MapView";
 import ListView from "./ListView";
@@ -34,6 +34,12 @@ export default function ClientWrapper({ clubs }: ClientWrapperProps) {
     );
     return ["all", ...uniqueSalesClusters];
   }, [clubs, selectedCountry]);
+  
+  useEffect(() => {
+    // Reset sales cluster when country changes to avoid list being empty
+    setSelectedSalesCluster("all");
+  }, [selectedCountry]);
+
 
   // Reset sales cluster when country changes
   useMemo(() => {
@@ -89,6 +95,8 @@ export default function ClientWrapper({ clubs }: ClientWrapperProps) {
           <MapView
             clubs={filteredClubs}
             selectedClub={selectedClub}
+            selectedCountry={selectedCountry}
+            
             onClubSelect={setSelectedClub}
           />
         </div>
