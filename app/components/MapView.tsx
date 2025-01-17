@@ -1,43 +1,72 @@
 "use client";
 import { useState, useEffect } from "react";
-import Map, { Marker, Popup } from "react-map-gl";
+import Map, {
+  Marker,
+  Popup,
+  GeolocateControl,
+  Source,
+  Layer,
+} from "react-map-gl";
 import "mapbox-gl/dist/mapbox-gl.css";
 import { Club } from "../types/clubs";
+import { useClubs } from "../context/ClubContext";
 
-interface MapViewProps {
-  clubs: Club[];
-  selectedClub: Club | null;
-  selectedCountry: string;
-  onClubSelect: (club: Club | null) => void;
+interface ClosestClub {
+  club: Club;
+  distance: number;
 }
 
-export default function MapView({
-  clubs,
-  selectedClub,
-  selectedCountry,
-  onClubSelect,
-}: MapViewProps) {
+export default function MapView() {
+  const { 
+    filteredClubs: clubs,
+    selectedClub,
+    selectedCountry,
+    setSelectedClub: onClubSelect 
+  } = useClubs();
+
   const [mapPosition, setmapPosition] = useState({
     longitude: 15.0,
     latitude: 57.0,
     zoom: 4,
   });
 
+  const [userLocation, setUserLocation] = useState<{
+    latitude: number;
+    longitude: number;
+  } | null>(null);
+  const [closestClub, setClosestClub] = useState<ClosestClub | null>(null);
+
+  const calculateDistance = (
+    lat1: number,
+    lon1: number,
+    lat2: number,
+    lon2: number
+  ) => {
+    const R = 6371; // Earth's radius in km
+    const dLat = (lat2 - lat1) * (Math.PI / 180);
+    const dLon = (lon2 - lon1) * (Math.PI / 180);
+    const a =
+      Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+      Math.cos(lat1 * (Math.PI / 180)) *
+        Math.cos(lat2 * (Math.PI / 180)) *
+        Math.sin(dLon / 2) *
+        Math.sin(dLon / 2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    return R * c; // Distance in km
+  };
+
   useEffect(() => {
-    // Close popup when country changes or if selectedClub is no longer in the clubs array
-    if (
-      selectedClub && !clubs.some((club) => club.id === selectedClub.id)
-    ) {
+    if (selectedClub && !clubs.some((club) => club.id === selectedClub.id)) {
       onClubSelect(null);
     }
   }, [clubs, selectedClub, onClubSelect]);
-  
-  // Add separate useEffect for country changes
+
   useEffect(() => {
     onClubSelect(null);
-  }, [selectedCountry]);
+    setClosestClub(null);
+    setUserLocation(null);
+  }, [selectedCountry, onClubSelect]);
 
-  //Move map to selectedClub location
   useEffect(() => {
     if (selectedClub?.geoLocation) {
       setmapPosition((prev) => ({
@@ -48,10 +77,7 @@ export default function MapView({
     }
   }, [selectedClub]);
 
-  //Move map to selectedCountry position
-
   useEffect(() => {
-    console.log(clubs)
     if (selectedCountry === "all") {
       setmapPosition({
         longitude: 15.0,
@@ -59,7 +85,6 @@ export default function MapView({
         zoom: 4,
       });
     } else if (clubs.length > 0) {
-      // First try to find a club in the capital city
       const capitalClubs = clubs.filter((club) => {
         const cityLower = club.address.city.toLowerCase();
         return (
@@ -69,10 +94,8 @@ export default function MapView({
           (selectedCountry === "Finland" && cityLower.includes("helsinki"))
         );
       });
-      console.log("Capital clubs found:", capitalClubs); 
 
       if (capitalClubs.length > 0) {
-        // If we found clubs in the capital, use the first one
         const capitalClub = capitalClubs[0];
         setmapPosition({
           longitude: capitalClub.geoLocation!.longitude,
@@ -80,7 +103,6 @@ export default function MapView({
           zoom: 10,
         });
       } else {
-        // If no capital clubs found, use any club from the filtered array
         const areaClub = clubs[0];
         setmapPosition({
           longitude: areaClub.geoLocation!.longitude,
@@ -91,16 +113,48 @@ export default function MapView({
     }
   }, [selectedCountry, clubs]);
 
+  const findClosestClub = (position: any) => {
+    const myLatitude = position.latitude;
+    const myLongitude = position.longitude;
+    setUserLocation({ latitude: myLatitude, longitude: myLongitude });
+
+    const clubWithDistance = clubs
+      .filter((club) => club.geoLocation)
+      .map((club) => ({
+        club,
+        distance: calculateDistance(
+          myLatitude,
+          myLongitude,
+          club.geoLocation!.latitude,
+          club.geoLocation!.longitude
+        )
+      }))
+      .sort((a, b) => a.distance - b.distance)[0];
+
+    setClosestClub(clubWithDistance);
+  };
+
   const formatTime = (hour: number, minute: number) =>
     `${hour.toString().padStart(2, "0")}:${minute.toString().padStart(2, "0")}`;
 
   const getClubOpeningHours = (openingHours: any) => {
-    // Find the opening hours for "Club"
     const clubHours = openingHours.regularOpeningHours.find(
       (hours: any) => hours.hoursFor === "Club"
     );
     return clubHours ? clubHours.days : [];
   };
+
+  const createRouteFeature = (club: Club) => ({
+    type: "Feature",
+    properties: {},
+    geometry: {
+      type: "LineString",
+      coordinates: [
+        [userLocation!.longitude, userLocation!.latitude],
+        [club.geoLocation!.longitude, club.geoLocation!.latitude],
+      ],
+    },
+  });
 
   return (
     <Map
@@ -109,6 +163,59 @@ export default function MapView({
       mapboxAccessToken={process.env.NEXT_PUBLIC_MAPBOX_TOKEN}
       mapStyle="mapbox://styles/mapbox/streets-v12"
     >
+      {/* Draw route to closest club */}
+      {userLocation && closestClub && (
+        <Source
+          key={closestClub.club.id}
+          id={`route-${closestClub.club.id}`}
+          type="geojson"
+          data={{
+            type: "FeatureCollection",
+            features: [createRouteFeature(closestClub.club)],
+          }}
+        >
+          <Layer
+            id={`route-layer-${closestClub.club.id}`}
+            type="line"
+            paint={{
+              "line-color": "#172554",
+              "line-width": 5,
+              "line-dasharray": [2, 1],
+            }}
+          />
+
+          <Layer
+            id={`route-label-${closestClub.club.id}`}
+            type="symbol"
+            layout={{
+              "text-field": `${closestClub.distance.toFixed(1)} km`,
+              "text-font": ["DIN Pro Bold", "Arial Unicode MS Bold"],
+              "text-size": 16,
+              "text-offset": [0, -0.5],
+              "text-anchor": "center",
+              "symbol-placement": "line-center",
+            }}
+            paint={{
+              "text-color": "#000",
+              "text-halo-color": "#fff",
+              "text-halo-width": 2,
+            }}
+          />
+        </Source>
+      )}
+
+      {/* User location marker */}
+      {userLocation && (
+        <Marker
+          longitude={userLocation.longitude}
+          latitude={userLocation.latitude}
+          anchor="center"
+        >
+          <div className="w-4 h-4 bg-blue-500 rounded-full border-2 border-white" />
+        </Marker>
+      )}
+
+      {/* Club markers */}
       {clubs.map((club) => (
         <Marker
           key={club.id}
@@ -121,12 +228,14 @@ export default function MapView({
               e.preventDefault();
               onClubSelect(club);
             }}
+            className="transition-all duration-300 ease-in-out"
           >
-            <span className="text-white text-2xl">📍</span>
+            <span className="text-2xl text-white">📍</span>
           </button>
         </Marker>
       ))}
 
+      {/* Selected club popup */}
       {selectedClub && selectedClub.geoLocation && (
         <Popup
           longitude={selectedClub.geoLocation.longitude}
@@ -136,6 +245,11 @@ export default function MapView({
         >
           <div className="p-4">
             <h3 className="font-bold text-xl">{selectedClub.name}</h3>
+            {closestClub?.club.id === selectedClub.id && (
+              <p className="text-md text-gray-600 mt-1">
+                Distance: {closestClub.distance.toFixed(1)} km
+              </p>
+            )}
             <h1 className="text-md font-semibold mt-2">Opening Hours</h1>
             {getClubOpeningHours(selectedClub.openingHours).map(
               (daySchedule: any) => (
@@ -172,6 +286,11 @@ export default function MapView({
           </div>
         </Popup>
       )}
+
+      <GeolocateControl
+        onGeolocate={(e) => findClosestClub(e.coords)}
+        showUserLocation={false}
+      />
     </Map>
   );
 }
