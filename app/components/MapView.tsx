@@ -7,16 +7,13 @@ import Map, {
   ScaleControl,
 } from "react-map-gl";
 import "mapbox-gl/dist/mapbox-gl.css";
-import { Club } from "../types/clubs";
+import { ClosestClub, Location } from "../types/clubs";
 import { useClubs } from "../context/ClubContext";
 import CustomMarker from "../ui/CustomMarker";
 import CustomPopup from "../ui/CustomPopup";
 import ShowClosestClub from "../ui/ShowClosestClub";
 
-interface ClosestClub {
-  club: Club;
-  distance: number;
-}
+
 
 export default function MapView() {
   const {
@@ -32,10 +29,7 @@ export default function MapView() {
     zoom: 4,
   });
 
-  const [userLocation, setUserLocation] = useState<{
-    latitude: number;
-    longitude: number;
-  } | null>(null);
+  const [userLocation, setUserLocation] = useState<Location | null>(null);
   const [closestClub, setClosestClub] = useState<ClosestClub | null>(null);
 
   const calculateDistance = (
@@ -115,7 +109,7 @@ export default function MapView() {
     }
   }, [selectedCountry, clubs]);
 
-  const findClosestClub = (position: any) => {
+  const findClosestClub = (position: GeolocationCoordinates) => {
     const myLatitude = position.latitude;
     const myLongitude = position.longitude;
     setUserLocation({ latitude: myLatitude, longitude: myLongitude });
@@ -148,7 +142,7 @@ export default function MapView() {
       {/* Custom marker from react-map-gl*/}
       <CustomMarker userLocation={userLocation} />
       {/* Custom popup from react-map-gl*/}
-      <CustomPopup closestClub={closestClub} />
+      <CustomPopup />
 
       <GeolocateControl
         position="top-right"

@@ -18,10 +18,15 @@ export default function ListView() {
    
     
     const containerRef = useRef<HTMLDivElement>(null);
+
+    //Sorting by country and area
     const groupedClubs = clubs.reduce<GroupedClubs>((acc, club) => {
         const country = club.address.country;
         const area = club.salesCluster?.name || 'Other';
         
+        //Puts club object based on for example: area[norway][rogaland]
+        //Dosen´t exist an empty array is assigned
+       
         if (!acc[country]) {
             acc[country] = {};
         }
@@ -30,13 +35,12 @@ export default function ListView() {
             acc[country][area] = [];
         }
         
+        
         acc[country][area].push(club);
         return acc;
     }, {});
 
 
- 
-   
     //Findig selectedElement and scrolling to it
     useEffect(() => {
         if (selectedClub && containerRef.current) {

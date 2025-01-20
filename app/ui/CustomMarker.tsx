@@ -1,7 +1,13 @@
 import { Marker } from "react-map-gl";
 import { useClubs } from "../context/ClubContext";
+import { Location } from "../types/clubs";
 
-const CustomMarker = ({ userLocation }: any) => {
+interface Props {
+  userLocation: Location | null;
+}
+
+
+const CustomMarker = ({ userLocation }: Props) => {
   const { filteredClubs: clubs, setSelectedClub: onClubSelect } = useClubs();
 
   return (
@@ -11,7 +17,7 @@ const CustomMarker = ({ userLocation }: any) => {
         <Marker
           longitude={userLocation.longitude}
           latitude={userLocation.latitude}
-          anchor="center"
+          anchor="top"
         >
           <div className="w-4 h-4 bg-blue-500 rounded-full border-2 border-white" />
         </Marker>
@@ -32,7 +38,7 @@ const CustomMarker = ({ userLocation }: any) => {
             }}
             className="transition-all duration-300 ease-in-out"
           >
-            <span className="text-2xl text-white">📍</span>
+            <span className="text-3xl text-white">📍</span>
           </button>
         </Marker>
       ))}

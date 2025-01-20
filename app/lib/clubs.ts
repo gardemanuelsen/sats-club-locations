@@ -34,8 +34,8 @@ export async function getClubs(): Promise<Club[]> {
     
     return validClubs;
   } catch (error) {
-    // Log error for debugging
+  
     console.error('Error fetching clubs:', error);
-    throw error; // Re-throw to be handled by error boundary
+    throw error; 
   }
 }

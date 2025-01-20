@@ -1,7 +1,12 @@
 import { Layer, Source } from "react-map-gl";
-import { Club } from "../types/clubs";
+import { ClosestClub, Club, Location,   } from "../types/clubs";
 
-const ShowClosestClub = ({ userLocation, closestClub }: any) => {
+interface Props {
+  closestClub: ClosestClub | null;
+  userLocation: Location | null;
+}
+
+const ShowClosestClub = ({ userLocation, closestClub }: Props) => {
   const createRouteFeature = (club: Club) => ({
     type: "Feature",
     properties: {},
@@ -18,8 +23,8 @@ const ShowClosestClub = ({ userLocation, closestClub }: any) => {
     <>
       {userLocation && closestClub && (
         <Source
-          key={closestClub.club.id}
-          id={`route-${closestClub.club.id}`}
+          key={`source-${closestClub.club.id}`}
+          id={`source-${closestClub.club.id}`}
           type="geojson"
           data={{
             type: "FeatureCollection",
@@ -27,7 +32,7 @@ const ShowClosestClub = ({ userLocation, closestClub }: any) => {
           }}
         >
           <Layer
-            id={`route-layer-${closestClub.club.id}`}
+            id={`line-${closestClub.club.id}`}
             type="line"
             paint={{
               "line-color": "#172554",
@@ -37,7 +42,7 @@ const ShowClosestClub = ({ userLocation, closestClub }: any) => {
           />
 
           <Layer
-            id={`route-label-${closestClub.club.id}`}
+              id={`label-${closestClub.club.id}`}
             type="symbol"
             layout={{
               "text-field": `${closestClub.distance.toFixed(1)} km`,

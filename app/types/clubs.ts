@@ -1,18 +1,27 @@
-
+//Types based on JSON
 export interface OpeningHours {
-  monday: DayHours;
-  tuesday: DayHours;
-  wednesday: DayHours;
-  thursday: DayHours;
-  friday: DayHours;
-  saturday: DayHours;
-  sunday: DayHours;
+  regularOpeningHours: []
 }
 
-export interface DayHours {
-  isOpen: boolean;
-  opens: string;  
-  closes: string; 
+export interface RegularOpeningHours {
+hoursFor: string;
+days: Days[]
+}
+
+
+export interface Days {
+  day: string;
+  timeSpans: TimeSpan[];
+}
+
+export interface TimeSpan {
+  opens: TimeFormat;
+  closes: TimeFormat;
+}
+
+export interface TimeFormat {
+  hour: number;
+  minute: number;
 }
 
 export interface Address {
@@ -68,4 +77,17 @@ export interface Club {
   salesCluster?: SalesCluster;
   closestClubs: ClosestClubs;
   maxGymFloorCapacity: number;
+}
+
+
+//Own types
+
+export interface ClosestClub {
+  club: Club;
+  distance: number;
+}
+
+export interface Location {
+  latitude: number;
+  longitude: number;
 }

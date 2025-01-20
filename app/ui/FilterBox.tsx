@@ -1,8 +1,8 @@
 import { useClubs } from "../context/ClubContext";
 import { IoFilter } from "react-icons/io5";
-import { useEffect, useState } from "react";
 
-interface FilterBoxProps {
+
+interface Props {
   isExpanded: boolean;
   onToggleExpand: () => void;
   mobileView: boolean;
@@ -16,7 +16,7 @@ export function FilterBox({
   mobileView,
   showMap,
   setShowMap,
-}: FilterBoxProps) {
+}: Props) {
   const {
     clubs,
     filteredClubs,

@@ -1,5 +1,5 @@
 import { createContext, useContext, useState, useMemo, useEffect, ReactNode } from 'react';
-import { Club } from '../types/clubs';
+import { Club, SalesCluster } from '../types/clubs';
 
 interface ClubsContextTypes {
   clubs: Club[];
@@ -25,27 +25,17 @@ export function ClubsProvider({ clubs, children }: { clubs: Club[], children: Re
   const [selectedSalesCluster, setSelectedSalesCluster] = useState<string>("all");
 
 
-  const countries = useMemo(() => {
-    const uniqueCountries = Array.from(
-      new Set(clubs.map((club) => club.address?.country || 'Unknown'))
-    );
-    return ["all", ...uniqueCountries];
-  }, [clubs]);
+  const countries = ["all", ...new Set(clubs.map((club) => club.address?.country || 'Unknown'))];
 
-  const salesClusters = useMemo(() => {
-    const uniqueSalesClusters = Array.from(
-      new Set(
-        clubs
-          .filter((club) => club.address?.country === selectedCountry)
-          .map((club) => club.salesCluster?.name || "Unknown")
-      )
-    );
-    return ["all", ...uniqueSalesClusters];
-  }, [clubs, selectedCountry]);
+  const salesClusters = [
+    "all",
+    ...new Set(
+      clubs
+        .filter((club) => club.address?.country === selectedCountry)
+        .map((club) => club.salesCluster?.name || "Unknown")
+    )
+  ];
 
-  useEffect(() => {
-    setSelectedSalesCluster("all");
-  }, [selectedCountry]);
 
   const filteredClubs = useMemo(() => {
     return clubs.filter((club) => {
@@ -62,6 +52,10 @@ export function ClubsProvider({ clubs, children }: { clubs: Club[], children: Re
       return matchesSearch && matchesCountry && matchesSalesCluster;
     });
   }, [clubs, searchTerm, selectedCountry, selectedSalesCluster]);
+
+  useEffect(() => {
+    setSelectedSalesCluster("all");
+  }, [selectedCountry]);
 
   const value = {
     clubs,

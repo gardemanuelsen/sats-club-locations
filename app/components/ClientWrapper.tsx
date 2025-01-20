@@ -7,7 +7,11 @@ import ListView from "./ListView";
 import MapView from "./MapView";
 import { Club } from "../types/clubs";
 
-export default function ClientWrapper({ clubs }: { clubs: Club[] }) {
+interface Props {
+  clubs: Club[]
+}
+
+export default function ClientWrapper({ clubs }: Props) {
   const [isExpanded, setIsExpanded] = useState(false);
   const [mobileView, setMobileView] = useState(false);
   const [showMap, setShowMap] = useState(true);
@@ -37,12 +41,12 @@ export default function ClientWrapper({ clubs }: { clubs: Club[] }) {
         ) : (
           // Desktop
           <div className="flex w-full h-full">
-            <div className="w-1/4 h-full">
+            <div className="w-1/5 h-full">
               <div className="h-full bg-white border-r">
                 <ListView />
               </div>
             </div>
-            <div className="w-3/4 h-full">
+            <div className="w-4/5 h-full">
               <MapView />
             </div>
           </div>
@@ -50,7 +54,7 @@ export default function ClientWrapper({ clubs }: { clubs: Club[] }) {
 
         <FilterBox 
           isExpanded={isExpanded}
-          onToggleExpand={() => setIsExpanded(!isExpanded)}
+          onToggleExpand={() => setIsExpanded(prev => !prev)}
           mobileView={mobileView}
           showMap={showMap}
           setShowMap={setShowMap}
