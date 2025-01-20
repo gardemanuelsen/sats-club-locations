@@ -1,15 +1,17 @@
 "use client";
 import { useState, useEffect } from "react";
 import Map, {
-  Marker,
-  Popup,
   GeolocateControl,
-  Source,
-  Layer,
+  FullscreenControl,
+  NavigationControl,
+  ScaleControl,
 } from "react-map-gl";
 import "mapbox-gl/dist/mapbox-gl.css";
 import { Club } from "../types/clubs";
 import { useClubs } from "../context/ClubContext";
+import CustomMarker from "../ui/CustomMarker";
+import CustomPopup from "../ui/CustomPopup";
+import ShowClosestClub from "../ui/ShowClosestClub";
 
 interface ClosestClub {
   club: Club;
@@ -17,11 +19,11 @@ interface ClosestClub {
 }
 
 export default function MapView() {
-  const { 
+  const {
     filteredClubs: clubs,
     selectedClub,
     selectedCountry,
-    setSelectedClub: onClubSelect 
+    setSelectedClub: onClubSelect,
   } = useClubs();
 
   const [mapPosition, setmapPosition] = useState({
@@ -127,34 +129,12 @@ export default function MapView() {
           myLongitude,
           club.geoLocation!.latitude,
           club.geoLocation!.longitude
-        )
+        ),
       }))
       .sort((a, b) => a.distance - b.distance)[0];
 
     setClosestClub(clubWithDistance);
   };
-
-  const formatTime = (hour: number, minute: number) =>
-    `${hour.toString().padStart(2, "0")}:${minute.toString().padStart(2, "0")}`;
-
-  const getClubOpeningHours = (openingHours: any) => {
-    const clubHours = openingHours.regularOpeningHours.find(
-      (hours: any) => hours.hoursFor === "Club"
-    );
-    return clubHours ? clubHours.days : [];
-  };
-
-  const createRouteFeature = (club: Club) => ({
-    type: "Feature",
-    properties: {},
-    geometry: {
-      type: "LineString",
-      coordinates: [
-        [userLocation!.longitude, userLocation!.latitude],
-        [club.geoLocation!.longitude, club.geoLocation!.latitude],
-      ],
-    },
-  });
 
   return (
     <Map
@@ -164,133 +144,20 @@ export default function MapView() {
       mapStyle="mapbox://styles/mapbox/streets-v12"
     >
       {/* Draw route to closest club */}
-      {userLocation && closestClub && (
-        <Source
-          key={closestClub.club.id}
-          id={`route-${closestClub.club.id}`}
-          type="geojson"
-          data={{
-            type: "FeatureCollection",
-            features: [createRouteFeature(closestClub.club)],
-          }}
-        >
-          <Layer
-            id={`route-layer-${closestClub.club.id}`}
-            type="line"
-            paint={{
-              "line-color": "#172554",
-              "line-width": 5,
-              "line-dasharray": [2, 1],
-            }}
-          />
-
-          <Layer
-            id={`route-label-${closestClub.club.id}`}
-            type="symbol"
-            layout={{
-              "text-field": `${closestClub.distance.toFixed(1)} km`,
-              "text-font": ["DIN Pro Bold", "Arial Unicode MS Bold"],
-              "text-size": 16,
-              "text-offset": [0, -0.5],
-              "text-anchor": "center",
-              "symbol-placement": "line-center",
-            }}
-            paint={{
-              "text-color": "#000",
-              "text-halo-color": "#fff",
-              "text-halo-width": 2,
-            }}
-          />
-        </Source>
-      )}
-
-      {/* User location marker */}
-      {userLocation && (
-        <Marker
-          longitude={userLocation.longitude}
-          latitude={userLocation.latitude}
-          anchor="center"
-        >
-          <div className="w-4 h-4 bg-blue-500 rounded-full border-2 border-white" />
-        </Marker>
-      )}
-
-      {/* Club markers */}
-      {clubs.map((club) => (
-        <Marker
-          key={club.id}
-          longitude={club.geoLocation!.longitude}
-          latitude={club.geoLocation!.latitude}
-          anchor="top"
-        >
-          <button
-            onClick={(e) => {
-              e.preventDefault();
-              onClubSelect(club);
-            }}
-            className="transition-all duration-300 ease-in-out"
-          >
-            <span className="text-2xl text-white">📍</span>
-          </button>
-        </Marker>
-      ))}
-
-      {/* Selected club popup */}
-      {selectedClub && selectedClub.geoLocation && (
-        <Popup
-          longitude={selectedClub.geoLocation.longitude}
-          latitude={selectedClub.geoLocation.latitude}
-          onClose={() => onClubSelect(null)}
-          closeOnClick={false}
-        >
-          <div className="p-4">
-            <h3 className="font-bold text-xl">{selectedClub.name}</h3>
-            {closestClub?.club.id === selectedClub.id && (
-              <p className="text-md text-gray-600 mt-1">
-                Distance: {closestClub.distance.toFixed(1)} km
-              </p>
-            )}
-            <h1 className="text-md font-semibold mt-2">Opening Hours</h1>
-            {getClubOpeningHours(selectedClub.openingHours).map(
-              (daySchedule: any) => (
-                <div
-                  key={daySchedule.day}
-                  className="flex justify-between gap-4"
-                >
-                  <span>{daySchedule.day}:</span>
-                  {daySchedule.timeSpans?.length > 0 ? (
-                    <span>
-                      {daySchedule.timeSpans.map(
-                        (timeSpan: any, index: number) => (
-                          <span key={index}>
-                            {formatTime(
-                              timeSpan.opens.hour,
-                              timeSpan.opens.minute
-                            )}{" "}
-                            -
-                            {formatTime(
-                              timeSpan.closes.hour,
-                              timeSpan.closes.minute
-                            )}
-                            {index < daySchedule.timeSpans.length - 1 && ", "}
-                          </span>
-                        )
-                      )}
-                    </span>
-                  ) : (
-                    <span>Closed</span>
-                  )}
-                </div>
-              )
-            )}
-          </div>
-        </Popup>
-      )}
+      <ShowClosestClub userLocation={userLocation} closestClub={closestClub} />
+      {/* Custom marker from react-map-gl*/}
+      <CustomMarker userLocation={userLocation} />
+      {/* Custom popup from react-map-gl*/}
+      <CustomPopup closestClub={closestClub} />
 
       <GeolocateControl
+        position="top-right"
         onGeolocate={(e) => findClosestClub(e.coords)}
         showUserLocation={false}
       />
+      <FullscreenControl position="top-right" />
+      <NavigationControl position="top-right" />
+      <ScaleControl />
     </Map>
   );
 }

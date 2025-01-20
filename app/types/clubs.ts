@@ -1,4 +1,3 @@
-// types/clubs.ts
 
 export interface OpeningHours {
   monday: DayHours;
@@ -12,8 +11,8 @@ export interface OpeningHours {
 
 export interface DayHours {
   isOpen: boolean;
-  opens: string;  // e.g. "06:00"
-  closes: string; // e.g. "22:00"
+  opens: string;  
+  closes: string; 
 }
 
 export interface Address {
@@ -69,8 +68,4 @@ export interface Club {
   salesCluster?: SalesCluster;
   closestClubs: ClosestClubs;
   maxGymFloorCapacity: number;
-}
-
-export interface ClubsResponse {
-  clubs: Club[];
 }

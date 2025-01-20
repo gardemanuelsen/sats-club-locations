@@ -1,9 +1,8 @@
 import { Suspense } from "react";
-import ListView from "./components/ListView";
-import MapView from "./components/MapView";
 import { getClubs } from "./lib/clubs";
 import LoadingPage from "./components/LoadingPage";
 import ClientWrapper from "./components/ClientWrapper";
+import ErrorPage from "./components/ErrorPage";
 
 export default async function Home() {
   return (
@@ -11,10 +10,14 @@ export default async function Home() {
       <MainContent />
     </Suspense>
   );
+}
 
   async function MainContent() {
-    const clubs = await getClubs();
-
-    return <ClientWrapper clubs={clubs} />;
+    try {
+      const clubs = await getClubs();
+      return <ClientWrapper clubs={clubs} />;
+    } catch (error) {
+      
+      return <ErrorPage error={error}/>;
+    }
   }
-}

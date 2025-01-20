@@ -2,7 +2,6 @@ import { useEffect, useRef, useState } from "react";
 import { Club } from "../types/clubs";
 import { useClubs } from "../context/ClubContext";
 
-// Define the structure of our grouped clubs object
 interface GroupedClubs {
   [country: string]: {
     [area: string]: Club[];
@@ -38,7 +37,7 @@ export default function ListView() {
 
  
    
-
+    //Findig selectedElement and scrolling to it
     useEffect(() => {
         if (selectedClub && containerRef.current) {
             const selectedElement = document.getElementById(selectedClub.id);

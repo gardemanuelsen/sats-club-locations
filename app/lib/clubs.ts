@@ -1,14 +1,14 @@
-import { Club, ClubsResponse } from "../types/clubs";
+import { Club } from "../types/clubs";
 
 export async function getClubs(): Promise<Club[]> {
   try {
    
     const res = await fetch("https://hfnapi.sats.com/clubs-v2/sats/clubs/", {
-      // Add caching options
+      // Caching for 1 hour
       next: {
-        revalidate: 3600 // Revalidate every hour
+        revalidate: 3600 
       },
-      // Add proper headers
+      
       headers: {
         'Content-Type': 'application/json',
       }
@@ -18,7 +18,7 @@ export async function getClubs(): Promise<Club[]> {
       throw new Error(`Failed to fetch clubs: ${res.status} ${res.statusText}`);
     }
     
-    const data: ClubsResponse = await res.json();
+    const data = await res.json() as { clubs: Club[] };
     
     const validClubs = data.clubs.filter((club) =>
       club.geoLocation &&

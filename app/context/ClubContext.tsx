@@ -24,7 +24,7 @@ export function ClubsProvider({ clubs, children }: { clubs: Club[], children: Re
   const [selectedCountry, setSelectedCountry] = useState<string>("all");
   const [selectedSalesCluster, setSelectedSalesCluster] = useState<string>("all");
 
-  // Memoized values
+
   const countries = useMemo(() => {
     const uniqueCountries = Array.from(
       new Set(clubs.map((club) => club.address?.country || 'Unknown'))
